@@ -22,7 +22,7 @@ const subscribeNever = () => () => {};
 const readSearch = () => window.location.search;
 
 export function formatDate(iso: string) {
-  const [y, m, d] = iso.split("-").map(Number);
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
   return `${y}년 ${m}월 ${d}일`;
 }
 

@@ -70,7 +70,8 @@ export function FilmStrip({ title, meta, children }: { title: string; meta?: str
         {meta ? <span className="tabular text-[11px] text-stamp">{meta}</span> : null}
       </div>
       <Sprockets />
-      <div className="grid grid-cols-4 gap-1 py-1">{children}</div>
+      {/* 실제 밀착 인화처럼 한 줄에 여섯 컷 */}
+      <div className="grid grid-cols-6 gap-[3px] py-1">{children}</div>
       <Sprockets />
     </section>
   );
@@ -118,7 +119,7 @@ export function FrameCell({
           style={reveal ? { animationDelay: `${(no % 8) * 90}ms` } : undefined}
         />
         {state === "sending" ? (
-          <span className="absolute inset-x-0 bottom-0 bg-black/70 py-0.5 text-center text-[9px] text-kodak">전송 대기</span>
+          <span className="absolute inset-x-0 bottom-0 bg-black/70 py-0.5 text-center text-[8px] text-kodak">대기</span>
         ) : null}
         {hidden ? (
           <span className="absolute inset-x-0 bottom-0 bg-safelight/90 py-0.5 text-center text-[9px] text-white">숨김</span>
@@ -133,8 +134,8 @@ export function FrameCell({
   }
 
   const content: Record<Exclude<CellState, "photo">, { text: string; className: string }> = {
-    sending: { text: "전송 대기", className: "bg-[#2b2620] text-kodak" },
-    rejected: { text: "전송 실패", className: "bg-safelight/25 text-safelight" },
+    sending: { text: "대기", className: "bg-[#2b2620] text-kodak" },
+    rejected: { text: "실패", className: "bg-safelight/25 text-safelight" },
     discarded: { text: "버림", className: "bg-[#15130f] text-faint line-through" },
     sealed: { text: "미현상", className: "bg-[#3a1512] text-safelight/80" },
     unused: { text: "", className: "bg-[#15130f]" },

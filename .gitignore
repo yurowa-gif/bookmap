@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 테스트 결과물
+/test-results/
+/playwright-report/
+
+# 환경 변수 예시는 저장소에 둔다
+!.env.example

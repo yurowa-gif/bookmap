@@ -377,7 +377,7 @@ export function AlbumScreen() {
                   {cells.length > 0 ? (
                     cells
                   ) : (
-                    <p className="col-span-4 py-3 text-center text-[12px] text-faint">아직 찍은 컷이 없어요</p>
+                    <p className="col-span-6 py-3 text-center text-[12px] text-faint">아직 찍은 컷이 없어요</p>
                   )}
                 </FilmStrip>
               );

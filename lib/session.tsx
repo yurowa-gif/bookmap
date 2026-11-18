@@ -56,7 +56,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const query = useQuery({
     queryKey: membershipsKey,
     enabled: isConfigured,
-    staleTime: 60_000,
+    staleTime: 30_000,
+    // 교사가 필름을 더 주거나 PIN을 초기화한 것을 늦지 않게 반영한다.
+    refetchInterval: 60_000,
     queryFn: async () => {
       await ensureAuth();
       return listMemberships();

@@ -131,8 +131,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const push = useCallback((text: string, tone: Toast["tone"] = "info") => {
     const id = nextId.current++;
-    setToasts((list) => [...list.slice(-2), { id, text, tone }]);
-    window.setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), 3200);
+    setToasts([{ id, text, tone }]); // 한 번에 하나만 보여 준다
+    window.setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), 2400);
   }, []);
 
   const value = useMemo(() => push, [push]);
@@ -142,7 +142,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 top-[max(env(safe-area-inset-top),12px)] z-[60] flex flex-col items-center gap-2 px-4"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(74px+env(safe-area-inset-bottom))] z-[60] flex flex-col items-center gap-2 px-4"
       >
         {toasts.map((toast) => (
           <div

@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ToastProvider } from "@/components/ui";
-import { flushQueue, listQueuedShots } from "@/lib/queue/runtime";
+import { flushQueue, listQueuedShots, subscribeQueue } from "@/lib/queue/runtime";
 import { SessionProvider } from "@/lib/session";
 import { isConfigured } from "@/lib/supabase/client";
 
@@ -18,14 +18,15 @@ function QueueRunner() {
     const run = async () => {
       if (stopped || !navigator.onLine) return;
       const pending = (await listQueuedShots().catch(() => [])).some((s) => s.state === "queued");
-      if (!pending) return;
-      const report = await flushQueue().catch(() => null);
-      if (report && report.sent + report.rejected > 0) {
-        for (const key of ["frames", "rolls", "placeCounts"]) {
-          void queryClient.invalidateQueries({ queryKey: [key] });
-        }
-      }
+      if (pending) await flushQueue().catch(() => null);
     };
+
+    // 컷이 대기열에 들어가거나 전송이 끝날 때마다 서버 쪽 목록을 다시 읽는다.
+    const unsubscribe = subscribeQueue(() => {
+      for (const key of ["frames", "rolls", "placeCounts"]) {
+        void queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    });
 
     const onVisible = () => {
       if (document.visibilityState === "visible") void run();
@@ -37,6 +38,7 @@ function QueueRunner() {
     const timer = window.setInterval(run, 30_000);
     return () => {
       stopped = true;
+      unsubscribe();
       window.removeEventListener("online", run);
       document.removeEventListener("visibilitychange", onVisible);
       window.clearInterval(timer);
