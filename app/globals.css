@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+/*
+ * 필름 카메라 디자인 토큰.
+ * 화면 전체가 카메라 몸체다: 따뜻한 검정 위에 노란 필름통 색과 날짜 스탬프 주황만 쓴다.
+ */
+@theme {
+  --color-body: #0e0d0b; /* 카메라 몸체 */
+  --color-panel: #181613; /* 몸체 위의 패널 */
+  --color-well: #23201b; /* 눌린 홈, 입력칸 */
+  --color-line: #332f28;
+  --color-ink: #f3efe6; /* 본문 글자 */
+  --color-dim: #a39d90; /* 보조 글자 */
+  --color-faint: #6d685e;
+  --color-kodak: #f5b301; /* 필름통 노랑: 주요 동작 */
+  --color-kodak-deep: #c98f00;
+  --color-stamp: #ff7a1a; /* 날짜 스탬프 주황 */
+  --color-safelight: #e5332a; /* 암실등 빨강: 현상, 경고 */
+  --color-paper: #f7f3ea; /* 인화지 */
+  --color-paper-ink: #1c1a17;
+
+  --font-sans: var(--font-pretendard), system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
+
+  --radius-frame: 3px; /* 필름 프레임은 거의 각지다 */
+
+  --animate-develop: develop 2.4s ease-out both;
+  --animate-wind: wind 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  --animate-rise: rise 0.28s ease-out both;
+  --animate-flash: flash 0.35s ease-out both;
+
+  @keyframes develop {
+    0% {
+      opacity: 0;
+      filter: sepia(1) saturate(4) hue-rotate(-40deg) brightness(0.25) blur(6px);
+    }
+    60% {
+      opacity: 1;
+      filter: sepia(0.8) saturate(2) hue-rotate(-25deg) brightness(0.7) blur(1px);
+    }
+    100% {
+      opacity: 1;
+      filter: none;
+    }
+  }
+  @keyframes wind {
+    0% {
+      transform: translateX(40%);
+      opacity: 0;
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes rise {
+    0% {
+      transform: translateY(16px);
+      opacity: 0;
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes flash {
+    0% {
+      opacity: 0.9;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}
+
+html {
+  background: var(--color-body);
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-body);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* 폰 화면 폭으로 고정한 앱 몸체 */
+.app-shell {
+  max-width: 480px;
+  margin-inline: auto;
+  min-height: 100dvh;
+}
+
+/* 필름 가장자리의 구멍 */
+.sprockets {
+  height: 10px;
+  background-image: radial-gradient(circle at center, transparent 0, transparent 100%),
+    repeating-linear-gradient(90deg, var(--color-body) 0 7px, transparent 7px 16px);
+  background-color: #2b2722;
+  mask-image: linear-gradient(#000, #000);
+  border-radius: 1px;
+}
+
+/* 필름 표면: 아주 옅은 세로 결 */
+.film-base {
+  background-color: #1d1a16;
+  background-image: linear-gradient(90deg, rgb(255 255 255 / 0.025) 1px, transparent 1px);
+  background-size: 3px 100%;
+}
+
+/* 몸체의 가죽 질감 */
+.leather {
+  background-color: var(--color-panel);
+  background-image: radial-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1.2px);
+  background-size: 5px 5px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-dim);
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-kodak);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
