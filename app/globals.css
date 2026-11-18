@@ -95,12 +95,11 @@ body {
 
 /* 필름 가장자리의 구멍 */
 .sprockets {
-  height: 10px;
-  background-image: radial-gradient(circle at center, transparent 0, transparent 100%),
-    repeating-linear-gradient(90deg, var(--color-body) 0 7px, transparent 7px 16px);
-  background-color: #2b2722;
-  mask-image: linear-gradient(#000, #000);
+  height: 9px;
   border-radius: 1px;
+  background-image: repeating-linear-gradient(90deg, var(--color-body) 0 8px, transparent 8px 17px);
+  background-position: 4px 0;
+  background-color: #2f2a24;
 }
 
 /* 필름 표면: 아주 옅은 세로 결 */
