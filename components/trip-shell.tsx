@@ -45,7 +45,7 @@ const icons = {
   ),
 };
 
-function TabBar({ membership }: { membership: Membership }) {
+function TabBar({ membership, wide }: { membership: Membership; wide: boolean }) {
   const pathname = usePathname();
   const tabs: Tab[] = [
     { href: "/camera", label: "카메라", icon: icons.camera },
@@ -58,7 +58,9 @@ function TabBar({ membership }: { membership: Membership }) {
   return (
     <nav
       aria-label="기행 메뉴"
-      className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-[480px] border-t border-line bg-body/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+      className={`fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-[480px] border-t border-line bg-body/95 pb-[env(safe-area-inset-bottom)] backdrop-blur ${
+        wide ? "lg:max-w-none lg:justify-center" : ""
+      }`}
     >
       {tabs.map((tab) => {
         const active = pathname === tab.href;
@@ -68,8 +70,8 @@ function TabBar({ membership }: { membership: Membership }) {
             href={tab.href}
             aria-current={active ? "page" : undefined}
             className={`flex min-h-[58px] flex-1 flex-col items-center justify-center gap-0.5 text-[11px] ${
-              active ? "font-bold text-kodak" : "text-dim"
-            }`}
+              wide ? "lg:max-w-[120px]" : ""
+            } ${active ? "font-bold text-kodak" : "text-dim"}`}
           >
             {tab.icon}
             {tab.label}
@@ -164,16 +166,23 @@ function Header({ membership }: { membership: Membership }) {
 }
 
 function LiveTrip({ membership, children }: { membership: Membership; children: React.ReactNode }) {
+  const pathname = usePathname();
   useTripLive(membership.trip.id);
   // 현상 여부처럼 자주 바뀌는 값은 따로 새로 읽어 덮어쓴다.
   const fresh = useTripInfo(membership.trip.id).data;
   const value = fresh ? { ...membership, trip: fresh } : membership;
+  // 지도 화면은 넓은 화면에서 창 높이에 딱 맞춰 두 칸으로 펼친다.
+  const wide = pathname === "/map";
   return (
     <TripProvider value={value}>
-      <div className="app-shell flex flex-col pb-[calc(58px+env(safe-area-inset-bottom))]">
+      <div
+        className={`app-shell flex flex-col pb-[calc(58px+env(safe-area-inset-bottom))] ${
+          wide ? "app-shell-wide lg:h-dvh" : ""
+        }`}
+      >
         <Header membership={value} />
-        <main className="flex-1">{children}</main>
-        <TabBar membership={value} />
+        <main className={`flex-1 ${wide ? "lg:min-h-0" : ""}`}>{children}</main>
+        <TabBar membership={value} wide={wide} />
       </div>
     </TripProvider>
   );

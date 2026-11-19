@@ -7,6 +7,7 @@ export interface KakaoLatLng {
 
 export interface KakaoMap {
   setCenter(position: KakaoLatLng): void;
+  panTo(position: KakaoLatLng): void;
   setBounds(bounds: KakaoBounds, paddingTop?: number, paddingRight?: number, paddingBottom?: number, paddingLeft?: number): void;
   getCenter(): KakaoLatLng;
   relayout(): void;

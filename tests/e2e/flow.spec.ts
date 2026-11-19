@@ -1,6 +1,8 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import pg from "pg";
 import { makePng, scenes } from "./png";
 
 // 기행 하나를 처음부터 끝까지: 교사가 만들고, 학생 둘이 찍고, 교사가 현상한다.
@@ -12,6 +14,32 @@ const photo = (index: number) => ({
   mimeType: "image/png",
   buffer: makePng(1200, 900, scenes[index]),
 });
+
+/** 지도 키 없이는 화면에서 장소를 검색해 넣을 수 없으므로, 테스트용 장소는 DB에 직접 넣는다. */
+async function seedPlaces(tripTitle: string) {
+  const db = new pg.Client({
+    host: process.env.PGHOST ?? "/var/run/postgresql",
+    port: process.env.PGPORT ? Number(process.env.PGPORT) : undefined,
+    user: process.env.PGUSER ?? os.userInfo().username,
+    password: process.env.PGPASSWORD,
+    database: process.env.BOOKMAP_DEV_DB ?? "bookmap_dev",
+  });
+  await db.connect();
+  try {
+    await db.query(
+      `insert into public.places (trip_id, name, address, lat, lng, kind, is_recommended, intro, menu_note)
+       select t.id, v.name, v.address, v.lat, v.lng, v.kind, v.rec, v.intro, v.menu
+       from public.trips t,
+            (values ('대오서점', '서울 종로구 자하문로7길 55', 37.5796, 126.9692, 'spot', true, '서울에서 가장 오래된 헌책방', ''),
+                    ('서촌식당', '서울 종로구 자하문로 1', 37.5788, 126.9712, 'restaurant', false, '', '칼국수 9,000원'))
+              as v(name, address, lat, lng, kind, rec, intro, menu)
+       where t.title = $1`,
+      [tripTitle],
+    );
+  } finally {
+    await db.end();
+  }
+}
 
 async function snap(page: Page, name: string) {
   if (!SHOTS) return;
@@ -66,6 +94,7 @@ test("교사가 만들고, 학생이 찍고, 교사가 현상한다", async ({ b
     await snap(page, "02-기행-생성");
     await page.getByRole("button", { name: "교사 화면으로" }).click();
     await expect(page.getByRole("button", { name: "현상하기" })).toBeVisible();
+    await seedPlaces("서촌 인문학기행");
   });
 
   await test.step("틀린 코드는 거부된다", async () => {
@@ -89,6 +118,9 @@ test("교사가 만들고, 학생이 찍고, 교사가 현상한다", async ({ b
   await test.step("안나가 두 컷을 찍는다", async () => {
     const page = anna.page;
     await shoot(page, 0, "대오서점 앞. 간판 글씨가 정겹다.");
+    await page.getByRole("button", { name: /어디서 찍었나요/ }).click();
+    await page.getByRole("dialog").getByRole("button", { name: /대오서점/ }).click();
+    await expect(page.getByRole("button", { name: /대오서점/ })).toContainText("바꾸기");
     await snap(page, "05-감기-전");
     await page.getByRole("button", { name: /필름 감기/ }).click();
     await expect(page.getByRole("status", { name: "남은 컷 23" })).toBeVisible();
@@ -195,13 +227,51 @@ test("교사가 만들고, 학생이 찍고, 교사가 현상한다", async ({ b
     await page.getByRole("button", { name: "닫기" }).last().click();
   });
 
-  await test.step("안내 화면과 지도 화면이 열린다", async () => {
+  await test.step("안내 화면에서 점심 식당을 고른다", async () => {
     const page = ben.page;
     await page.getByRole("link", { name: "안내" }).click();
     await expect(page.getByText("선생님이 아직 안내를 올리지 않았어요.")).toBeVisible();
+    const choice = page.getByRole("button", { name: /서촌식당/ });
+    await choice.click();
+    await expect(choice).toHaveAttribute("aria-pressed", "true");
+    await expect(choice).toContainText("1명");
+    await snap(page, "16-안내");
+  });
+
+  await test.step("지도 화면에서 장소를 누르면 그곳의 사진과 기록이 나온다", async () => {
+    const page = ben.page;
     await page.getByRole("link", { name: "지도" }).click();
-    await expect(page.getByText("아직 장소가 없어요")).toBeVisible();
-    await snap(page, "16-지도-키-없음");
+    const card = page.getByRole("button", { name: /대오서점/ });
+    // 카메라는 직전에 고른 장소를 유지하므로 안나의 세 컷이 모두 대오서점에 묶인다.
+    await expect(card).toContainText("3컷");
+    await expect(page.getByText("장소 없이 남긴 컷 1")).toBeVisible();
+    await snap(page, "17-지도-폰");
+    await card.click();
+    const sheet = page.getByRole("dialog", { name: "대오서점" });
+    await expect(sheet.getByText("서울에서 가장 오래된 헌책방")).toBeVisible();
+    await expect(sheet.getByText("대오서점 앞. 간판 글씨가 정겹다.")).toBeVisible();
+    await snap(page, "18-장소-폰");
+    await sheet.getByRole("button", { name: /대오서점 앞/ }).click();
+    await expect(page.getByRole("dialog", { name: "1번 컷" })).toBeVisible();
+  });
+
+  await test.step("넓은 화면에서는 한쪽에 기록, 한쪽에 지도가 놓인다", async () => {
+    const page = teacher.page;
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.getByRole("link", { name: "지도" }).click();
+    const panel = page.getByRole("region", { name: "장소와 기록" });
+    await expect(panel.getByRole("button", { name: /대오서점/ })).toBeVisible();
+    await snap(page, "19-지도-넓은-화면");
+    await panel.getByRole("button", { name: /대오서점/ }).click();
+    // 넓은 화면에서는 시트가 아니라 왼쪽 칸 안에서 펼쳐진다.
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(panel.getByRole("heading", { name: "대오서점" })).toBeVisible();
+    await expect(panel.getByText("대오서점 앞. 간판 글씨가 정겹다.")).toBeVisible();
+    const box = await panel.boundingBox();
+    expect(box && box.width).toBeLessThan(500);
+    await snap(page, "20-장소-넓은-화면");
+    await panel.getByRole("button", { name: "← 장소 목록" }).click();
+    await expect(panel.getByText("장소 2곳")).toBeVisible();
   });
 
   expect([...teacher.errors, ...anna.errors, ...ben.errors]).toEqual([]);

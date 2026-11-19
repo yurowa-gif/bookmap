@@ -93,6 +93,13 @@ body {
   min-height: 100dvh;
 }
 
+/* 지도 화면은 넓은 화면에서 두 칸(기록 | 지도)으로 펼친다 */
+@media (min-width: 1024px) {
+  .app-shell-wide {
+    max-width: none;
+  }
+}
+
 /* 필름 가장자리의 구멍 */
 .sprockets {
   height: 9px;

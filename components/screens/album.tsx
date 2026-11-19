@@ -237,6 +237,27 @@ function Viewer({
   );
 }
 
+/** 컷 하나를 띄우는 창. 필요한 것(장소, 도장, 큰 사진 주소)을 스스로 불러온다. 지도 화면에서 쓴다. */
+export function FrameViewer({ frame, onClose }: { frame: Frame; onClose: () => void }) {
+  const { trip } = useTrip();
+  const places = usePlaces(trip.id).data ?? [];
+  const rolls = useRollStats(trip.id).data;
+  const frameIds = useMemo(() => [frame.id], [frame.id]);
+  const stampsQuery = useStamps(trip.id, frameIds, Boolean(trip.developed_at));
+  const stamps = useMemo(() => stampsQuery.data ?? [], [stampsQuery.data]);
+  const paths = useMemo(() => (frame.photo_path ? [frame.photo_path] : []), [frame.photo_path]);
+  const urls = usePhotoUrls(paths);
+  return (
+    <Viewer
+      viewing={{ frame, owner: rolls?.find((r) => r.member_id === frame.member_id) }}
+      places={places}
+      stamps={stamps}
+      photoUrl={frame.photo_path ? urls[frame.photo_path] : undefined}
+      onClose={onClose}
+    />
+  );
+}
+
 export function AlbumScreen() {
   const { trip, member } = useTrip();
   const isTeacher = member.role === "teacher";
